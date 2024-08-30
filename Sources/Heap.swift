@@ -28,10 +28,11 @@ public struct Heap<Element: Comparable> {
     public var peek: Element? { storage[safe: 0] }
     
     
-    /// Initialize a heap with priority determined by the 
+    /// Initialize a heap with priority determined by the caller
+    /// If no priority function is called, implement a min heap
     /// - Parameters:
-    ///   - initialValues: <#initialValues description#>
-    ///   - isPriority: <#isPriority description#>
+    ///   - initialValues: (optional) Array of values to enqueue to the heap
+    ///   - isPriority: function determining which element has priority and should float upward
     public init(
         _ initialValues: [Element] = [Element](),
         priority isPriority: @escaping Priority = { $0 < $1 }
@@ -47,7 +48,7 @@ extension Heap {
     /// *O(n \* log(n)) runtime complexity where n = number of initial values
     /// - Parameter initialValues: (optional) Array of values to be enqueued onto the heap at start
     /// - Returns: ``Heap`` of elements where minimum value is kept at the top
-    static func minHeap(_ initialValues: [Element] = [Element]()) -> Heap<Element> {
+    public static func minHeap(_ initialValues: [Element] = [Element]()) -> Heap<Element> {
         Heap(initialValues, priority: { $0 < $1 })
     }
     
@@ -55,7 +56,7 @@ extension Heap {
     /// *O(n \* log(n)) runtime complexity where n = number of initial values
     /// - Parameter initialValues: (optional) Array of values to be enqueued onto the heap at start
     /// - Returns: ``Heap`` of elements where maximum value is kept at the top
-    static func maxHeap(_ initialValues: [Element] = [Element]()) -> Heap<Element> {
+    public static func maxHeap(_ initialValues: [Element] = [Element]()) -> Heap<Element> {
         Heap(initialValues, priority: { $0 > $1 })
     }
 }
@@ -108,13 +109,13 @@ extension Heap {
         // Shift down while the index represents a lower priority than it's children
         // Swap with highest priority child
         var index = index
-        while var lowerPriority = lhs(of: index).map({ isPriority(storage[index], storage[$0]) ? $0 : index }) {
-            lowerPriority = rhs(of: index).map { isPriority(storage[lowerPriority], storage[$0]) ? $0 : lowerPriority } ?? lowerPriority
-            if index == lowerPriority {
+        while var priority = lhs(of: index).map({ isPriority(storage[index], storage[$0]) ? index : $0 }) {
+            priority = rhs(of: index).map { isPriority(storage[priority], storage[$0]) ? priority : $0 } ?? priority
+            if index == priority {
                 break
             } else {
-                swap(index, lowerPriority)
-                index = lowerPriority
+                swap(index, priority)
+                index = priority
             }
         }
     }
@@ -131,11 +132,11 @@ extension Heap {
     
     mutating
     public func dequeue() -> Element? {
-        if storage.count < 2 {
+        if count < 2 {
             // One or zero elements, return last if there is one
             return storage.popLast()
         }
-        swap(0, storage.count-1)
+        swap(0, count-1)
         let element = storage.removeLast()
         shiftDown(elementAt: 0)
         return element
