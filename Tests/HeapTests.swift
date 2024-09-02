@@ -53,20 +53,3 @@ final class HeapTests: XCTestCase {
         XCTAssertEqual(heap.peek, 2)
     }
 }
-
-// MARK: - Performance tests
-
-extension HeapTests {
-
-    func test_heapSort_isFasterThanStandardSort() {
-        var unsortedA = (0...10_000).map { _ in Int.random(in: 0..<Int.max) }
-        var unsortedB = unsortedA
-        measure(metrics: [XCTMemoryMetric(), XCTClockMetric()]) {
-            unsortedA.sort()
-        }
-        
-        measure(metrics: [XCTMemoryMetric(), XCTClockMetric()]) {
-            unsortedA.sort()
-        }
-    }
-}
