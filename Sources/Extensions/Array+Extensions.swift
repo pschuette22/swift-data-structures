@@ -13,9 +13,4 @@ extension Array {
         
         return self[index]
     }
-    
-    mutating
-    public func heapSort() {
-        
-    }
 }
