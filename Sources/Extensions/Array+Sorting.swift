@@ -133,7 +133,6 @@ extension Array where Element: Comparable {
     ) {
         for index in 1..<count {
             for swapIndex in stride(from: index, to: 0, by: -1) {
-                print("striding over \(swapIndex) from \(index)")
                 if isPriority(self[swapIndex-1], self[swapIndex]) { continue }
                     
                 swapAt(swapIndex, swapIndex-1)
