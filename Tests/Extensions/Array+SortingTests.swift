@@ -21,10 +21,20 @@ final class Array_SortingTests: XCTestCase {
         array.heapSort()
         XCTAssertEqual(array, [0,1,2,3,4,5,6,7,8])
     }
+
+    func test_heapSorted_sortsElements() {
+        let array = [0,1,2,3,4,5,6,7,8].shuffled()
+        XCTAssertEqual(array.heapSorted(), [0,1,2,3,4,5,6,7,8])
+    }
     
     func test_mergeSort_sortsElement() {
         var array = [0,1,2,3,4,5,6,7,8].shuffled()
         array.mergeSort()
         XCTAssertEqual(array, [0,1,2,3,4,5,6,7,8])
+    }
+
+    func test_mergeSorted_sortsElement() {
+        let array = [0,1,2,3,4,5,6,7,8].shuffled()
+        XCTAssertEqual(array.mergeSorted(), [0,1,2,3,4,5,6,7,8])
     }
 }

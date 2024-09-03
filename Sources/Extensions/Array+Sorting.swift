@@ -72,7 +72,20 @@ extension Array where Element: Comparable {
             shiftDown(i, 0)
         }
     }
-    
+
+    @inlinable
+    public func heapSorted(
+        by isPriority: @escaping IsPriority = { $0 < $1 }
+    ) -> [Element] {
+        var heap = Heap<Element>(priority: isPriority)
+        heap.push(all: self)
+        var result = [Element]()
+        while let next = heap.pop() {
+            result.append(next)
+        }
+        return result
+    }
+
     @inlinable
     mutating
     public func mergeSort(
@@ -123,6 +136,46 @@ extension Array where Element: Comparable {
         }
 
         mergeSort(lhs: 0, rhs: count-1)
+    }
+
+    @inlinable
+    public func mergeSorted(
+        by isPriority: @escaping IsPriority = { $0 < $1 }
+    ) -> [Element]{         
+        /// Recursive function for executing a merge sort in place
+        /// - Parameters:
+        ///   - lhs: start index within array to merge sort
+        ///   - rhs: end index within array to merge sort
+        func mergeSorted(lhs: Int, rhs: Int) -> [Element] {
+            guard lhs < rhs else { return [self[lhs]] }
+
+            let mid = lhs + (rhs - lhs) / 2
+            var lhsSorted = mergeSorted(lhs: lhs, rhs: mid)
+            var rhsSorted = mergeSorted(lhs: mid+1, rhs: rhs)
+
+
+            if 
+                let lhsLast = lhsSorted.last,
+                let rhsFirst = rhsSorted.first,
+                isPriority(lhsLast, rhsFirst) {
+                    // Already in order
+                    return lhsSorted + rhsSorted
+            }
+
+            var merged = [Element]()
+            merged.reverse()
+            while let lhsLast = lhsSorted.last, let rhsLast = rhsSorted.last {
+                if isPriority(lhsLast, rhsLast) {
+                    merged.append(rhsSorted.removeLast())
+                } else {
+                    merged.append(lhsSorted.removeLast())
+                }
+            }
+            // Merge sorting is done in reverse to avoid swift array index shifting 
+            return lhsSorted + rhsSorted + merged.reversed()
+        }
+
+        return mergeSorted(lhs: 0, rhs: count-1)
     }
     
     
