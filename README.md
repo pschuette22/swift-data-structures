@@ -39,3 +39,8 @@ heap.push(-2)
 heap.peek // Output: -2
 var ordered = [Int]()
 ```
+
+## Validation Report
+Checkout the interactive [DataStructuresReport](https://github.com/pschuette22/DataStructuresReport) Mac App for a visual performance comparision!
+
+<img src="docs/resources/data-structure-report-interactive-legend.gif" height="500"/>
