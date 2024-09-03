@@ -36,7 +36,6 @@ heap.peek // Output: -1
 heap.pop() // Output: -1
 heap.push(-2)
 heap.peek // Output: -2
-var ordered = [Int]()
 ```
 
 ## Validation Report
