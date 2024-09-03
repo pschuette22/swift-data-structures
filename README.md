@@ -13,17 +13,16 @@ This repository contains implementations of various data structures in Swift. It
 
 ## Installation
 1. Swift Package Manager:
-    ```
+```swift
   dependencies: [
     .package(url: "https://github.com/pschuette22/swift-data-structures", from: "1.0.1"),
   ],
   .target(
-    ...
     dependencies: [
       .product(name: "DataStructures", package: "swift-data-structures"),
     ],
   ),
-    ```
+```
 
 ## Usage
 Example of using the Heap data structure:
