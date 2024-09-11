@@ -10,7 +10,7 @@ import Foundation
 
 /// Map Unique keys to arbitrary values
 public struct HashMap<Key: Hashable & Comparable, Value> {
-    typealias Storage = Array<Array<Node>?>
+    typealias Storage = ContiguousArray<Array<Node>?>
     
     struct Node {
         let key: Key
@@ -20,13 +20,13 @@ public struct HashMap<Key: Hashable & Comparable, Value> {
     /// Capacity of the storage array
     private let rootCapacity: Int
     /// Underlying storage
-    private var storage: Array<Array<Node>?>
+    private var storage: Storage
 
     /// Initialize the HashMap
     /// - Parameter expectedCapacity: Higher capcaity creates a larger minimum storage footprint
     public init(minimumCapacity: Int = 100) {
         rootCapacity = minimumCapacity
-        storage = Array(repeating: nil, count: minimumCapacity)
+        storage = ContiguousArray(repeating: nil, count: minimumCapacity)
     }
 
     /// Number of elements in the HashMap
@@ -40,7 +40,7 @@ public struct HashMap<Key: Hashable & Comparable, Value> {
     /// - Parameter key: Unique key for storing and retrieving a value
     /// - Returns: Value mapped to key, if present
     public func get(valueFor key: Key) -> Value? {
-        let index = key.hashValue % rootCapacity
+        let index = abs(key.hashValue) % rootCapacity
         return storage[index]?.first(where: { $0.key == key })?.value
     }
 
@@ -51,7 +51,7 @@ public struct HashMap<Key: Hashable & Comparable, Value> {
     ///   - value: (optional) value to map to a key
     ///   - key: unique identifier for the value
     /// - Returns: Value that was replaced or nil
-    @discardableResult mutating public func set(
+    @discardableResult mutating public func insert(
         _ value: Value?,
         for key: Key
     ) -> Value? {
@@ -59,7 +59,7 @@ public struct HashMap<Key: Hashable & Comparable, Value> {
             return remove(valueFor: key)
         }
 
-        let storageIndex = key.hashValue % rootCapacity
+        let storageIndex = abs(key.hashValue) % rootCapacity
         var indexedStorage = storage[storageIndex] ?? Array<Node>()
         defer {
             storage[storageIndex] = indexedStorage
@@ -80,9 +80,9 @@ public struct HashMap<Key: Hashable & Comparable, Value> {
     @discardableResult mutating public func remove(
         valueFor key: Key
     ) -> Value? {
-        let storageIndex = key.hashValue % rootCapacity
-        guard 
-            var indexedStorage = storage[storageIndex],
+        let storageIndex = abs(key.hashValue) % rootCapacity
+        guard
+            let indexedStorage = storage[storageIndex],
             let existingIndex = indexedStorage.firstIndex(where: { $0.key == key })
         else { return nil }
 
@@ -100,7 +100,7 @@ public struct HashMap<Key: Hashable & Comparable, Value> {
             get(valueFor: key)
         }
         set {
-            set(newValue, for: key)
+            insert(newValue, for: key)
         }
     }
 }
