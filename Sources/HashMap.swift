@@ -7,33 +7,58 @@
 
 import Foundation
 
-public struct HashMap<Key: Hashable & Comparable, Element> {
-    private let rootCapacity: Int
-    private var storage: Array<Array<Node>?>
+
+/// Map Unique keys to arbitrary values
+public struct HashMap<Key: Hashable & Comparable, Value> {
+    typealias Storage = Array<Array<Node>?>
+    
     struct Node {
         let key: Key
-        let value: Element
+        let value: Value
     }
 
-    public init(expectedCapacity: Int = 100) {
-        rootCapacity = expectedCapacity
-        storage = Array(repeating: nil, count: expectedCapacity)
+    /// Capacity of the storage array
+    private let rootCapacity: Int
+    /// Underlying storage
+    private var storage: Array<Array<Node>?>
+
+    /// Initialize the HashMap
+    /// - Parameter expectedCapacity: Higher capcaity creates a larger minimum storage footprint
+    public init(minimumCapacity: Int = 100) {
+        rootCapacity = minimumCapacity
+        storage = Array(repeating: nil, count: minimumCapacity)
     }
-    
+
+    /// Number of elements in the HashMap
     public var count: Int {
         storage.reduce(into: 0) { result, indexedStorage in
             result += indexedStorage?.count ?? 0
         }
     }
-    
-    public func get(valueFor key: Key) -> Element? {
+
+    /// Retrieve a value for a key. Nil if one does not exist
+    /// - Parameter key: Unique key for storing and retrieving a value
+    /// - Returns: Value mapped to key, if present
+    public func get(valueFor key: Key) -> Value? {
         let index = key.hashValue % rootCapacity
         return storage[index]?.first(where: { $0.key == key })?.value
     }
-    
-    @discardableResult
-    mutating
-    public func set(_ value: Element, for key: Key) -> Element? {
+
+    /// Update the value for a key
+    /// If the key already has a mapped value, overwrite and return the replaced value
+    /// If the provided value is nil, remove the existing mapping
+    /// - Parameters:
+    ///   - value: (optional) value to map to a key
+    ///   - key: unique identifier for the value
+    /// - Returns: Value that was replaced or nil
+    @discardableResult mutating public func set(
+        _ value: Value?,
+        for key: Key
+    ) -> Value? {
+        guard let value else {
+            return remove(valueFor: key)
+        }
+
         let storageIndex = key.hashValue % rootCapacity
         var indexedStorage = storage[storageIndex] ?? Array<Node>()
         defer {
@@ -48,10 +73,13 @@ public struct HashMap<Key: Hashable & Comparable, Element> {
             return nil
         }
     }
-    
-    @discardableResult
-    mutating
-    public func remove(valueFor key: Key) -> Element? {
+
+    /// Remove the value for a key.
+    /// - Parameter key: unique identifier of value that should be removed
+    /// - Returns: value that was removed or nil if none was found
+    @discardableResult mutating public func remove(
+        valueFor key: Key
+    ) -> Value? {
         let storageIndex = key.hashValue % rootCapacity
         guard 
             var indexedStorage = storage[storageIndex],
@@ -66,22 +94,65 @@ public struct HashMap<Key: Hashable & Comparable, Element> {
             return storage[storageIndex]?.remove(at: existingIndex).value
         }
     }
-    
-    public subscript(_ key: Key) -> Element? {
+
+    public subscript(_ key: Key) -> Value? {
         get {
             get(valueFor: key)
         }
         set {
-            if let newValue {
-                set(newValue, for: key)
-            } else {
-                remove(valueFor: key)
-            }
+            set(newValue, for: key)
         }
     }
 }
 
-extension HashMap.Node: Equatable where Element: Equatable { }
-extension HashMap.Node: Hashable where Element: Hashable { }
-extension HashMap: Equatable where Element: Equatable { }
-extension HashMap: Hashable where Element: Hashable { }
+// MARK: - HashMap + Sequence
+
+extension HashMap: Sequence {
+    public typealias Element = (Key, Value)
+    
+    public struct Iterator: IteratorProtocol {
+        public typealias Element = (Key, Value)
+        
+        var iteratorIndex = 0
+        var innerIterator: Array<Node>.Iterator?
+        var storage: Storage
+        
+        init(_ storage: Storage) {
+            self.storage = storage
+        }
+        
+
+        mutating
+        public func next() -> Element? {
+            if let next = innerIterator?.next() {
+                return (next.key, next.value)
+            }
+
+            repeat {
+                // Find the next
+                iteratorIndex += 1
+            } while iteratorIndex < storage.count && storage[iteratorIndex] == nil
+
+            guard iteratorIndex < storage.count else { return nil }
+            
+            innerIterator = storage[iteratorIndex]?.makeIterator()
+            return innerIterator?.next().map { ($0.key, $0.value) }
+        }
+    }
+
+    /// Make an iterator to iterate over all key / value pairs
+    /// - Returns: Iterates over 
+    public func makeIterator() -> Iterator {
+        Iterator(storage)
+    }
+}
+
+// MARK: - HashMap + Equatable
+
+extension HashMap.Node: Equatable where Value: Equatable { }
+extension HashMap: Equatable where Value: Equatable { }
+
+// MARK: - HashMap + Hashable
+
+extension HashMap.Node: Hashable where Value: Hashable { }
+extension HashMap: Hashable where Value: Hashable { }
