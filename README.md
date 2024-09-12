@@ -5,6 +5,7 @@ This repository contains implementations of various data structures in Swift. It
 
 ## Data Structures
 - [Heap](https://github.com/pschuette22/swift-data-structures/blob/main/Sources/Heap.swift)
+- [HashMap](https://github.com/pschuette22/swift-data-structures/blob/main/Sources/HashMap.swift)
 
 ## Algorithms
 - [Heap Sort (in place)](https://github.com/pschuette22/swift-data-structures/blob/main/Sources/Extensions/Array%2BSorting.swift#L40)
@@ -25,7 +26,7 @@ This repository contains implementations of various data structures in Swift. It
 ```
 
 ## Usage
-Example of using the Heap data structure:
+### Heap
 ```swift
 import DataStructures
 
@@ -36,6 +37,20 @@ heap.peek // Output: -1
 heap.pop() // Output: -1
 heap.push(-2)
 heap.peek // Output: -2
+```
+
+### HashMap
+```swift
+import DataStructures
+
+...
+var map = HashMap<String: Int>()
+map["one"] = 1
+print(map["one"]) // Output: 1
+map["one"] = 2
+print(map["one"]) // Output: 2
+map.remove(valueFor: "one")
+print(map["one"]) // Output: nil
 ```
 
 ## Validation Report

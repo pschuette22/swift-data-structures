@@ -88,4 +88,20 @@ final class HashMapTests: XCTestCase {
         XCTAssertEqual(iterations.count, 3)
         XCTAssertEqual(iterations, Set<String>(["one", "two", "three"]))
     }
+    
+    func testIterator_iteratesOverEveryValue_withIndexCollision() {
+        var map = HashMap<String, String>(minimumCapacity: 1) // 
+        map["one"] = "one"
+        map["two"] = "two"
+        map["three"] = "three"
+        
+        var iterator = map.makeIterator()
+        var iterations = Set<String>()
+        while let next = iterator.next() {
+            XCTAssertEqual(next.0, next.1)
+            iterations.insert(next.0)
+        }
+        XCTAssertEqual(iterations.count, 3)
+        XCTAssertEqual(iterations, Set<String>(["one", "two", "three"]))
+    }
 }

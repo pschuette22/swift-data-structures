@@ -23,10 +23,23 @@ public struct HashMap<Key: Hashable & Comparable, Value> {
     private var storage: Storage
 
     /// Initialize the HashMap
-    /// - Parameter expectedCapacity: Higher capcaity creates a larger minimum storage footprint
-    public init(minimumCapacity: Int = 100) {
+    /// - Parameter minimumCapacity: Higher capcaity creates a larger minimum storage footprint with some retrieval optimization
+    public init(minimumCapacity: Int = 100, file: StaticString = #file, line: UInt = #line) {
+        precondition(
+            minimumCapacity > 0,
+            "HashMap storage capacity must be greater than zero!",
+            file: file,
+            line: line
+        )
         rootCapacity = minimumCapacity
         storage = ContiguousArray(repeating: nil, count: minimumCapacity)
+    }
+
+    /// Convert the key into an index for value storage
+    /// - Parameter key: Unique identifier for the value
+    /// - Returns: index within storage array for this key
+    private func storageIndex(of key: Key) -> Int {
+        abs(key.hashValue) % rootCapacity
     }
 
     /// Number of elements in the HashMap
@@ -40,8 +53,7 @@ public struct HashMap<Key: Hashable & Comparable, Value> {
     /// - Parameter key: Unique key for storing and retrieving a value
     /// - Returns: Value mapped to key, if present
     public func get(valueFor key: Key) -> Value? {
-        let index = abs(key.hashValue) % rootCapacity
-        return storage[index]?.first(where: { $0.key == key })?.value
+        return storage[storageIndex(of: key)]?.first(where: { $0.key == key })?.value
     }
 
     /// Update the value for a key
@@ -59,7 +71,7 @@ public struct HashMap<Key: Hashable & Comparable, Value> {
             return remove(valueFor: key)
         }
 
-        let storageIndex = abs(key.hashValue) % rootCapacity
+        let storageIndex = storageIndex(of: key)
         var indexedStorage = storage[storageIndex] ?? Array<Node>()
         defer {
             storage[storageIndex] = indexedStorage
@@ -80,7 +92,7 @@ public struct HashMap<Key: Hashable & Comparable, Value> {
     @discardableResult mutating public func remove(
         valueFor key: Key
     ) -> Value? {
-        let storageIndex = abs(key.hashValue) % rootCapacity
+        let storageIndex = storageIndex(of: key)
         guard
             let indexedStorage = storage[storageIndex],
             let existingIndex = indexedStorage.firstIndex(where: { $0.key == key })
@@ -119,6 +131,20 @@ extension HashMap: Sequence {
         
         init(_ storage: Storage) {
             self.storage = storage
+            innerIterator = nextIterator(from: 0)
+        }
+        
+        private mutating func nextIterator(from index: Int) -> Array<Node>.Iterator? {
+            guard index < storage.count else { return nil }
+
+            for i in index..<storage.count {
+                iteratorIndex = i
+                if let iterator = storage[i]?.makeIterator() {
+                    return iterator
+                }
+            }
+            
+            return nil
         }
         
 
@@ -127,15 +153,11 @@ extension HashMap: Sequence {
             if let next = innerIterator?.next() {
                 return (next.key, next.value)
             }
-
-            repeat {
-                // Find the next
-                iteratorIndex += 1
-            } while iteratorIndex < storage.count && storage[iteratorIndex] == nil
-
-            guard iteratorIndex < storage.count else { return nil }
             
-            innerIterator = storage[iteratorIndex]?.makeIterator()
+            if let nextIterator = nextIterator(from: iteratorIndex + 1) {
+                innerIterator = nextIterator
+            }
+            
             return innerIterator?.next().map { ($0.key, $0.value) }
         }
     }
