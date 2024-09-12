@@ -24,7 +24,13 @@ public struct HashMap<Key: Hashable & Comparable, Value> {
 
     /// Initialize the HashMap
     /// - Parameter expectedCapacity: Higher capcaity creates a larger minimum storage footprint
-    public init(minimumCapacity: Int = 100) {
+    public init(minimumCapacity: Int = 100, file: StaticString = #file, line: UInt = #line) {
+        precondition(
+            minimumCapacity > 0,
+            "HashMap storage capacity must be greater than zero!",
+            file: file,
+            line: line
+        )
         rootCapacity = minimumCapacity
         storage = ContiguousArray(repeating: nil, count: minimumCapacity)
     }
@@ -119,6 +125,20 @@ extension HashMap: Sequence {
         
         init(_ storage: Storage) {
             self.storage = storage
+            innerIterator = nextIterator(from: 0)
+        }
+        
+        private mutating func nextIterator(from index: Int) -> Array<Node>.Iterator? {
+            guard index < storage.count else { return nil }
+
+            for i in index..<storage.count {
+                iteratorIndex = i
+                if let iterator = storage[i]?.makeIterator() {
+                    return iterator
+                }
+            }
+            
+            return nil
         }
         
 
@@ -127,15 +147,11 @@ extension HashMap: Sequence {
             if let next = innerIterator?.next() {
                 return (next.key, next.value)
             }
-
-            repeat {
-                // Find the next
-                iteratorIndex += 1
-            } while iteratorIndex < storage.count && storage[iteratorIndex] == nil
-
-            guard iteratorIndex < storage.count else { return nil }
             
-            innerIterator = storage[iteratorIndex]?.makeIterator()
+            if let nextIterator = nextIterator(from: iteratorIndex + 1) {
+                innerIterator = nextIterator
+            }
+            
             return innerIterator?.next().map { ($0.key, $0.value) }
         }
     }
